@@ -1,1 +1,8 @@
 @import "tailwindcss";
+
+
+
+
+@theme {
+  --font-Candal: "Candal", sans-serif; 
+}
