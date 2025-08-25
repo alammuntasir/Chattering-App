@@ -1,16 +1,21 @@
 import React, { useState } from "react";
 import { Link } from "react-router";
 import toast, { Toaster } from "react-hot-toast";
-import {getAuth, createUserWithEmailAndPassword } from "firebase/auth";
+import {
+  createUserWithEmailAndPassword,
+  sendEmailVerification,
+  updateProfile,
+} from "firebase/auth";
+import { useNavigate } from "react-router";
+import { auth } from "../../firebase.config";
 
 const Signup = () => {
-  const auth = getAuth();
   const [userInfo, setUserInfo] = useState({
     name: "",
     email: "",
     password: "",
   });
-
+  const navigate = useNavigate();
   const handleName = (e) => {
     setUserInfo((prev) => {
       return { ...prev, name: e.target.value };
@@ -39,24 +44,35 @@ const Signup = () => {
     } else {
       createUserWithEmailAndPassword(auth, userInfo.email, userInfo.password)
         .then((userCredential) => {
-          // Signed up
-          const user = userCredential.user;
-          // ...
+          sendEmailVerification(auth.currentUser).then(() => {
+            updateProfile(auth.currentUser, {
+              displayName: userInfo.name,
+              photoURL: "https://example.com/jane-q-user/profile.jpg",
+            })
+              .then(() => {
+                const user = userCredential.user;
 
-          console.log(user);
+                console.log(user);
+                navigate("/");
+              })
+              .catch((error) => {
+                console.log(error);
+              });
+          });
+          // Signed up
         })
         .catch((error) => {
           const errorCode = error.code;
           const errorMessage = error.message;
           // ..
-          if (errorCode.includes("auth/email-already-in-use")){
-            toast.error ("Email already in use");
+          if (errorCode.includes("auth/email-already-in-use")) {
+            toast.error("Email already in use");
 
             setUserInfo({
               name: "",
               email: "",
               password: "",
-            })
+            });
           }
         });
     }
@@ -85,7 +101,8 @@ const Signup = () => {
                 >
                   Your Name
                 </label>
-                <input value={userInfo.name}
+                <input
+                  value={userInfo.name}
                   onChange={handleName}
                   type="text"
                   name="text"
@@ -102,7 +119,8 @@ const Signup = () => {
                 >
                   Your email
                 </label>
-                <input value={userInfo.email}
+                <input
+                  value={userInfo.email}
                   onChange={handleEmail}
                   type="text"
                   name="email"
@@ -119,7 +137,8 @@ const Signup = () => {
                 >
                   Password
                 </label>
-                <input value={userInfo.password}
+                <input
+                  value={userInfo.password}
                   onChange={handlepassword}
                   type="password"
                   name="password"
