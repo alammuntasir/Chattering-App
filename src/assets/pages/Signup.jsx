@@ -1,13 +1,15 @@
 import React, { useState } from "react";
 import { Link } from "react-router";
-import toast, { Toaster } from 'react-hot-toast';
+import toast, { Toaster } from "react-hot-toast";
+import {getAuth, createUserWithEmailAndPassword } from "firebase/auth";
+
 const Signup = () => {
+  const auth = getAuth();
   const [userInfo, setUserInfo] = useState({
     name: "",
     email: "",
     password: "",
   });
-
 
   const handleName = (e) => {
     setUserInfo((prev) => {
@@ -27,21 +29,42 @@ const Signup = () => {
 
   const handleSignup = (e) => {
     e.preventDefault();
-    
-    if (!userInfo.name || !userInfo.email ||!userInfo.password) {
+
+    if (!userInfo.name || !userInfo.email || !userInfo.password) {
       toast.error("all fill  are required");
-    } else
-    if (!/^\w+([-]?\w+)*@\w+([-]?\w+)*(\.\w{2,3})+$/.test(userInfo.email)){
+    } else if (
+      !/^\w+([-]?\w+)*@\w+([-]?\w+)*(\.\w{2,3})+$/.test(userInfo.email)
+    ) {
       toast.error("Invalid Email Address");
     } else {
-      console.log(userInfo)
+      createUserWithEmailAndPassword(auth, userInfo.email, userInfo.password)
+        .then((userCredential) => {
+          // Signed up
+          const user = userCredential.user;
+          // ...
+
+          console.log(user);
+        })
+        .catch((error) => {
+          const errorCode = error.code;
+          const errorMessage = error.message;
+          // ..
+          if (errorCode.includes("auth/email-already-in-use")){
+            toast.error ("Email already in use");
+
+            setUserInfo({
+              name: "",
+              email: "",
+              password: "",
+            })
+          }
+        });
     }
-      
-  } 
+  };
 
   return (
     <section className="bg-gray-50 dark:bg-green-900 font-Candal">
-       <Toaster />
+      <Toaster />
       <div className="flex flex-col items-center justify-center px-6 py-8 mx-auto md:h-screen lg:py-0">
         <a
           href="#"
@@ -62,7 +85,7 @@ const Signup = () => {
                 >
                   Your Name
                 </label>
-                <input
+                <input value={userInfo.name}
                   onChange={handleName}
                   type="text"
                   name="text"
@@ -79,8 +102,8 @@ const Signup = () => {
                 >
                   Your email
                 </label>
-                <input
-                onChange={handleEmail}
+                <input value={userInfo.email}
+                  onChange={handleEmail}
                   type="text"
                   name="email"
                   id="email"
@@ -96,8 +119,8 @@ const Signup = () => {
                 >
                   Password
                 </label>
-                <input
-                onChange={handlepassword}
+                <input value={userInfo.password}
+                  onChange={handlepassword}
                   type="password"
                   name="password"
                   id="password"
